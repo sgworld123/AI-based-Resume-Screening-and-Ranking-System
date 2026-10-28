@@ -1,66 +1,119 @@
-# AI-powered Resume Screening and Ranking System: Streamline Your Hiring Process
-A web-based application that leverages AI to screen and rank resumes based on job descriptions, making your hiring process efficient and effective.
+# AI-Powered Resume Screening & Ranking System
 
-# 🖼️ Preview
-![image](https://github.com/user-attachments/assets/1277d71c-9f92-4be0-accc-1f52c75efd9c)
+A Streamlit app that ranks PDF resumes against a job description. It scores each candidate on skills match and text similarity, then shows which skills they have and which they are missing.
 
-# 📑 Project Document
-For a detailed overview of the project, you can refer to the project Document:
-[AI-powered Resume Screening and Ranking System - Project Document](AI-powered-Resume-Screening-and-Ranking-System.pdf)
+<img width="1126" height="588" alt="image" src="https://github.com/user-attachments/assets/a266bf11-49b1-43c3-967f-2e02b13d1807" />
+<img width="1044" height="592" alt="image" src="https://github.com/user-attachments/assets/3f244c71-e02a-4ca0-bad2-f0172b0756fe" />
 
-# 🚀 Features
-* Resume Screening: Automatically screen resumes based on the provided job description.
-* Candidate Ranking: Rank candidates using AI-powered algorithms for better hiring decisions.
-* PDF Support: Upload resumes in PDF format for seamless processing.
 
-# 🛠 Tech Stack
-> Frontend
-* Streamlit (for building interactive web applications)
-> Backend
-* Python (for server-side operations)
-* PyPDF2 (for extracting text from PDF files)
-* scikit-learn (for text processing and similarity calculations)
+## Features
 
-# 📂 Directory Structure
+- Paste a job description and upload multiple PDF resumes at once
+- Blended 0-100 score: **60% skills match + 40% semantic similarity**
+- Automatic detection of **required** and **good-to-have** skills from the job description
+- Per-candidate breakdown: matched skills, missing required skills, missing good-to-have skills
+- Match labels: **Strong** (70+), **Moderate** (40-69), **Low** (below 40)
+- Summary stats: candidate count, top score, average, gap between #1 and #2
+- Export the ranking as CSV
+- Handles scanned or unreadable PDFs with a clear warning instead of crashing
+- Dark, card-based UI
+
+## How scoring works
+
+| Component | Weight | Method |
+|---|---|---|
+| Skills match | 60% | Skills are detected in the job description from a built-in dictionary of ~45 skills with aliases (e.g. `k8s` = Kubernetes). Required skills count 2x, good-to-have skills 1x. Each resume is checked for the same skills using whole-word matching. |
+| Semantic similarity | 40% | TF-IDF (unigrams + bigrams) cosine similarity between the job description and the resume, rescaled to 0-100. |
+
+The JD is split into sections by headings such as "Required Skills" and "Good to Have". Skills in a good-to-have section count once, and everything else counts as required. If no known skills are found in the JD, the score falls back to semantic similarity only.
+
+**Sample result** (backend SDE-1 job description, one strong and one weak resume):
+
+| Candidate | Score | Verdict |
+|---|---|---|
+| Strong backend resume (Java, Spring Boot, JWT, Docker, Redis, Kafka) | 72.2 | Strong match |
+| Web design resume (HTML, CSS, WordPress) | 7.3 | Low match |
+
+## Tech stack
+
+- Python 3.10+
+- [Streamlit](https://streamlit.io/) for the UI
+- [scikit-learn](https://scikit-learn.org/) for TF-IDF and cosine similarity
+- [PyPDF2](https://pypdf2.readthedocs.io/) for PDF text extraction
+- pandas for the CSV export
+
+## Project structure
+
 ```
-github.com/codewithshek/AI-powered-Resume-Screening-and-Ranking-System/
-├── Readme.md
-├── AI-powered-Resume-Screening-and-Ranking-System-PPT.pdf
-└── Main.py
- ```
-# 📌 Setup & Installation
-
-1. Clone the Repository
+.
+├── .streamlit/
+│   └── config.toml        # dark theme settings
+├── Main.py                # Streamlit UI and app flow
+├── Scoring.py             # skill extraction, scoring, ranking
+├── Styles.css             # custom styling
+├── requirements.txt
+└── README.md
 ```
-git clone https://github.com/codewithshek/AI-powered-Resume-Screening-and-Ranking-System.git
+
+## Getting started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/<your-username>/AI-powered-Resume-Screening-and-Ranking-System.git
 cd AI-powered-Resume-Screening-and-Ranking-System
 ```
-2. Install Dependencies
+
+### 2. Create and activate a virtual environment
+
+Windows:
+
+```powershell
+python -m venv venv
+venv\Scripts\activate
 ```
+
+Mac/Linux:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
-3. Run the Application
-```
+
+### 4. Run the app
+
+Run this from the project root so the `.streamlit/config.toml` theme is picked up:
+
+```bash
 streamlit run Main.py
 ```
-4. Access the Application
-```
-Open your browser and navigate to the generated custom URL like http://localhost:8501/ to start using the AI-powered resume screening tool.
-```
 
-# 📜 Key Functions
+The app opens at `http://localhost:8501`.
 
-* extract_text_from_pdf(file): Extracts text from a given PDF file.
-* rank_resumes(job_description, resumes): Ranks resumes based on the provided job description using cosine similarity.
+## Usage
 
-# 💡 Future Enhancements
-✅ Implement support for additional file formats (e.g., DOCX).
+1. Paste the full job description. Using headings like **Required Skills** and **Good to Have** gives the most accurate skill weighting.
+2. Upload one or more PDF resumes.
+3. Click **Analyse**.
+4. Review the ranked candidate cards and download the CSV if needed.
 
-✅ Add advanced natural language processing (NLP) techniques for better resume analysis.
+## Limitations
 
-✅ Develop a mobile application for on-the-go resume screening and ranking.
+- Only skills in the built-in dictionary are detected. To add more, edit the `SKILLS` dictionary in `Scoring.py`.
+- Scanned (image-only) PDFs have no extractable text and are skipped. OCR is not included.
+- TF-IDF measures word overlap, not meaning, so it can miss synonyms the skills dictionary doesn't cover.
+- Scores are a screening aid and should not replace human review.
 
-# 🤝 Contributing
-Feel free to fork and submit pull requests. Any contributions are welcome!
+## Roadmap
 
-Made with ❤️ by D ABHISHEK YADAV as part of **AICTE- Internship on AI: Transformative Learning with TechSaksham – A joint CSR initiative of Microsoft & SAP, focusing on AI Technologies**
+- Sentence-embedding similarity instead of TF-IDF
+- OCR support for scanned resumes
+- Experience and education scoring
+- Support for DOCX resumes
+- Editable skills dictionary from the UI
